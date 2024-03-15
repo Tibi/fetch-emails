@@ -12,7 +12,7 @@ object FetchEmails {
     @JvmStatic
     fun main(args: Array<String>) {
 
-//        replaceImages("INFO 15 - NEW ZEALAND 2023-2024")
+//        replaceImages("INFO 20 NEW ZEALAND 2023-2024")
 //        if (true) return
 
         println("Connecting to IMAP server.")
@@ -126,7 +126,7 @@ object FetchEmails {
 
         // Replace image references
         fileContent = fileContent.replace(
-            Regex("""\(photo\s*(\s*\d+\s*)\)""", RegexOption.MULTILINE)
+            Regex("""\(photos?\s*(\s*\d+\s*)\)""", RegexOption.MULTILINE)
         ) { matchResult ->
             val photoNum = matchResult.groupValues[1].toInt()
             img(fileName, infoNum, photoNum)
