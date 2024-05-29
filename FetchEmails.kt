@@ -5,14 +5,14 @@ import java.util.*
 import javax.mail.*
 
 
-private const val SUBJECT_TEXT = "NEW ZEALAND"
+private const val SUBJECT_TEXT = "INFO NORV"
 
 object FetchEmails {
 
     @JvmStatic
     fun main(args: Array<String>) {
 
-//        replaceImages("INFO 20 NEW ZEALAND 2023-2024")
+//        replaceImages("INFO NORVÈGE - 02")
 //        if (true) return
 
         println("Connecting to IMAP server.")
@@ -49,30 +49,33 @@ object FetchEmails {
             File("$fileName.html").writeText(getText(multipart.getBodyPart(0)))
             replaceImages(fileName)
 
-            val numPhotos = multipart.count - 1
-            // Process any attached photos
-            print("Saving $numPhotos photos: ")
-            for (i in 1..numPhotos) {
-                val part: Part = multipart.getBodyPart(i)
-                val partFileName = part.fileName.lowercase()
-                if (part.isMimeType("image/jpeg")) {
-                    // Write the image to a file
-                    FileUtils.copyInputStreamToFile(part.inputStream, File("$fileName/$partFileName"))
-                    print(".")
-                    // warning if filename is not  \d\d-\d\d\.jpg
-                    if (!partFileName.matches(Regex("""\d\d-\d\d\.jpg"""))) {
-                        println("\nWrongly named photo $partFileName")
-                    }
-                } else {
-                    println("\nFound non-jpeg attachment $partFileName")
-                }
-            }
-            println()
+            saveAttachedPhotos(multipart, fileName)
         }
 
         // Close the IMAP connection
         inbox.close(false)
         store.close()
+    }
+
+    private fun saveAttachedPhotos(multipart: Multipart, fileName: String) {
+        val numPhotos = multipart.count - 1
+        print("Saving $numPhotos photos: ")
+        for (i in 1..numPhotos) {
+            val part: Part = multipart.getBodyPart(i)
+            val partFileName = part.fileName.lowercase()
+            if (part.isMimeType("image/jpeg")) {
+                // Write the image to a file
+                FileUtils.copyInputStreamToFile(part.inputStream, File("$fileName/$partFileName"))
+                print(".")
+                // warning if filename is not in the right format
+                if (!partFileName.matches(Regex("""\d\d\.jpg"""))) {
+                    println("\nWrongly named photo $partFileName")
+                }
+            } else {
+                println("\nFound non-jpeg attachment $partFileName")
+            }
+        }
+        println()
     }
 
     @Throws(MessagingException::class, IOException::class)
@@ -109,13 +112,13 @@ object FetchEmails {
     }
 
     private fun replaceImages(fileName: String) {
-        println("Replacing (photo...) text with links in $fileName")
+        println("Replacing '(photo...)' text with links in $fileName")
 
         val backupDirectory = "backup"
         File(backupDirectory).mkdir()  // Create backup directory if it doesn't exist
 
         // Extract infoNum from fileName
-        val infoNum = fileName.substringAfter("INFO ").substringBefore(" ").toInt()
+        val infoNum = Regex("""(\d+)$""").find(fileName)!!.groupValues[1].toInt()
 
         // Read HTML file content
         var fileContent = File("$fileName.html").readText(Charsets.UTF_8)
@@ -154,7 +157,7 @@ object FetchEmails {
     }
 
     private fun img(fileName: String, infoNum: Int, photoNum: Int) =
-        "<br/><br/><img src=\"$fileName/${formatNum(infoNum)}-${formatNum(photoNum)}.jpg\"/><br/><br/>"
+        "<br/><br/><img src=\"$fileName/${formatNum(photoNum)}.jpg\"/><br/><br/>"
 
     private fun formatNum(n: Int) = n.toString().padStart(2, '0')
 }
