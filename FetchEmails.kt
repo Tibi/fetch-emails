@@ -47,9 +47,15 @@ object FetchEmails {
             val multipart: Multipart = message.content as Multipart
             // Save text to html file
             File("$fileName.html").writeText(getText(multipart.getBodyPart(0)))
-            replaceImages(fileName)
 
-            saveAttachedPhotos(multipart, fileName)
+            val replCount = replaceImages(fileName)
+
+            var savedCount = saveAttachedPhotos(multipart, fileName)
+
+            if (replCount != savedCount) {
+                println("¡¡¡PHOTOS COUNT MISMATCH!!!")
+            }
+            println()
         }
 
         // Close the IMAP connection
@@ -57,15 +63,17 @@ object FetchEmails {
         store.close()
     }
 
-    private fun saveAttachedPhotos(multipart: Multipart, fileName: String) {
-        val numPhotos = multipart.count - 1
-        print("Saving $numPhotos photos: ")
-        for (i in 1..numPhotos) {
+    private fun saveAttachedPhotos(multipart: Multipart, fileName: String): Int {
+        val numAttachments = multipart.count - 1
+        var numPhotos = 0
+        print("Saving photos: ")
+        for (i in 1..numAttachments) {
             val part: Part = multipart.getBodyPart(i)
             val partFileName = part.fileName.lowercase()
             if (part.isMimeType("image/jpeg")) {
                 // Write the image to a file
                 FileUtils.copyInputStreamToFile(part.inputStream, File("$fileName/$partFileName"))
+                numPhotos++
                 print(".")
                 // warning if filename is not in the right format
                 if (!partFileName.matches(Regex("""\d\d\.jpg"""))) {
@@ -75,7 +83,8 @@ object FetchEmails {
                 println("\nFound non-jpeg attachment $partFileName")
             }
         }
-        println()
+        println("Saved $numPhotos photos.")
+        return numPhotos
     }
 
     @Throws(MessagingException::class, IOException::class)
@@ -111,7 +120,7 @@ object FetchEmails {
         return ""
     }
 
-    private fun replaceImages(fileName: String) {
+    private fun replaceImages(fileName: String): Int {
         println("Replacing '(photo...)' text with links in $fileName")
 
         val backupDirectory = "backup"
@@ -128,10 +137,12 @@ object FetchEmails {
         File("$fileName.html").copyTo(File(backupFileName), overwrite = true)
 
         // Replace image references
+        var replCounter = 0
         fileContent = fileContent.replace(
             Regex("""\(photos?\s*(\s*\d+\s*)\)""", RegexOption.MULTILINE)
         ) { matchResult ->
             val photoNum = matchResult.groupValues[1].toInt()
+            replCounter++
             img(fileName, infoNum, photoNum)
         }
         fileContent = fileContent.replace(
@@ -139,7 +150,8 @@ object FetchEmails {
         ) { matchResult ->             // "(photo n et m)"
             val startNum = matchResult.groupValues[1].toInt()
             val endNum = matchResult.groupValues[2].toInt()
-            img(fileName, infoNum, startNum) +img(fileName, infoNum, endNum)
+            replCounter += 2
+            img(fileName, infoNum, startNum) + img(fileName, infoNum, endNum)
         }
         fileContent = fileContent.replace(
             Regex("""\(photos?\s*(\d+)\s*à\s*(\d+)\)""", RegexOption.MULTILINE)
@@ -147,13 +159,15 @@ object FetchEmails {
             val startNum = matchResult.groupValues[1].toInt()
             val endNum = matchResult.groupValues[2].toInt()
             val imageTags = (startNum..endNum).joinToString(separator = "") {
+                replCounter++
                 img(fileName, infoNum, it)
             }
             imageTags
         }
-
+        println("Replaced $replCounter photos.")
         // Save modified content
         File("$fileName.html").writeText(fileContent, Charsets.UTF_8)
+        return replCounter
     }
 
     private fun img(fileName: String, infoNum: Int, photoNum: Int) =
