@@ -3,16 +3,12 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/backup" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="apache.poi.ooxml" level="project" />
     <orderEntry type="library" name="sun.mail.javax" level="project" />
-  </component>
-  <component name="SonarLintModuleSettings">
-    <option name="uniqueId" value="503d88bc-0871-4fd4-88f9-3913b12cb146" />
   </component>
 </module>

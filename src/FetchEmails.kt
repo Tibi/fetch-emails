@@ -70,7 +70,7 @@ object FetchEmails {
         for (i in 1..numAttachments) {
             val part: Part = multipart.getBodyPart(i)
             val partFileName = part.fileName.lowercase()
-            if (part.isMimeType("image/jpeg")) {
+            if (part.isMimeType("image/jpeg") || part.isMimeType("image/png")) {
                 // Write the image to a file
                 FileUtils.copyInputStreamToFile(part.inputStream, File("$fileName/$partFileName"))
                 numPhotos++
@@ -80,7 +80,7 @@ object FetchEmails {
                     println("\nWrongly named photo $partFileName")
                 }
             } else {
-                println("\nFound non-jpeg attachment $partFileName")
+                println("\nFound non-image attachment $partFileName of type ${part.contentType}")
             }
         }
         println("Saved $numPhotos photos.")
