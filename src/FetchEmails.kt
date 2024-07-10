@@ -164,7 +164,7 @@ object FetchEmails {
             }
             imageTags
         }
-        println("Replaced $replCounter photos.")
+        println("Replaced $replCounter photos links.")
         // Save modified content
         File("$fileName.html").writeText(fileContent, Charsets.UTF_8)
         return replCounter
